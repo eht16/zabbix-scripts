@@ -36,12 +36,17 @@ is included in the standard libraries, at least since Python 2.6, maybe even ear
 
 To get it working, simply edit the parameters below and maybe set up a cronjob
 to execute this script once a day or once a way or whatever you prefer.
+Alternatively, you can specify the full path to a config file as the first and only
+command line argument to overwrite the default values below. This way you do not
+need to edit this script. An example config file can be found in the GIT repository
+where you got this script from.
 
 The graphs are queried from the Zabbix frontend and then sent as attachments
 via mail to the configured address.
 """
 
 
+from ConfigParser import ConfigParser
 from cookielib import CookieJar
 from datetime import datetime, timedelta
 from email import Encoders
@@ -53,8 +58,10 @@ from socket import getfqdn
 from urllib import urlencode
 from urllib2 import build_opener, HTTPCookieProcessor
 import smtplib
+import sys
 
 
+# either edit these values or provide a config file which will overwrite the values below
 ZABBIX_FRONTEND_URL = u'https://example.com/zabbix'
 ZABBIX_USERNAME = 'zabbix_user'
 ZABBIX_PASSWORD = 'zabbix_password'
@@ -71,14 +78,75 @@ SMTP_SUBJECT = u'Zabbix Report'
 SMTP_SERVER = u'localhost'
 
 
+########################################################################
+class Configuration(object):
+
+
+    #----------------------------------------------------------------------
+    def __init__(self):
+        self.zabbix_frontend_url = ZABBIX_FRONTEND_URL
+        self.zabbix_username = ZABBIX_USERNAME
+        self.zabbix_password = ZABBIX_PASSWORD
+        self.graph_width = GRAPH_WIDTH
+        self.graph_height = GRAPH_HEIGHT
+        self.graph_period = GRAPH_PERIOD
+        self.graph_ids = GRAPH_IDS
+        self.smtp_from = SMTP_FROM
+        self.smtp_to = SMTP_TO
+        self.smtp_subject = SMTP_SUBJECT
+        self.smtp_server = SMTP_SERVER
+
+        self._parser = None
+        self._vars = dict(fqdn=getfqdn())
+
+    #----------------------------------------------------------------------
+    def read(self):
+        if len(sys.argv) <= 1:
+            return
+        self._parser = ConfigParser()
+        self._parser.read(sys.argv[1])
+
+        self._get_string('zabbix_frontend_url')
+        self._get_string('zabbix_username')
+        self._get_string('zabbix_password')
+        self._get_int('graph_width')
+        self._get_int('graph_height')
+        self._get_int('graph_period')
+        self._get_list('graph_ids')
+        self._get_string('smtp_from')
+        self._get_list('smtp_to')
+        self._get_string('smtp_subject')
+        self._get_string('smtp_server')
+
+    #----------------------------------------------------------------------
+    def _get_string(self, key):
+        if self._parser.has_option('zabbix', key):
+            value = self._parser.get('zabbix', key, vars=self._vars)
+            setattr(self, key, value)
+
+    #----------------------------------------------------------------------
+    def _get_int(self, key):
+        if self._parser.has_option('zabbix', key):
+            value = self._parser.getint('zabbix', key)
+            setattr(self, key, value)
+
+    #----------------------------------------------------------------------
+    def _get_list(self, key):
+        if self._parser.has_option('zabbix', key):
+            value = self._parser.get('zabbix', key)
+            value = eval(value)
+            setattr(self, key, value)
+
+
+
 #----------------------------------------------------------------------
-def login():
-    url = u'%s/index.php' % ZABBIX_FRONTEND_URL
+def login(config):
+    url = u'%s/index.php' % config.zabbix_frontend_url
     data = urlencode(dict(
         form='1',
         form_refresh='1',
-        name=ZABBIX_USERNAME,
-        password=ZABBIX_PASSWORD,
+        name=config.zabbix_username,
+        password=config.zabbix_password,
         enter='Enter'))
     cookie_jar = CookieJar()
     cookie_processor = HTTPCookieProcessor(cookie_jar)
@@ -92,8 +160,8 @@ def login():
 
 
 #----------------------------------------------------------------------
-def logout(cookie_jar):
-    url = u'%s/index.php' % ZABBIX_FRONTEND_URL
+def logout(config, cookie_jar):
+    url = u'%s/index.php' % config.zabbix_frontend_url
     data = urlencode(dict(reconnect='1'))
 
     cookie_processor = HTTPCookieProcessor(cookie_jar)
@@ -103,14 +171,14 @@ def logout(cookie_jar):
 
 
 #----------------------------------------------------------------------
-def get_graph(cookie_jar, graph_id, start_time):
-    url = u'%s/chart2.php' % ZABBIX_FRONTEND_URL
+def get_graph(config, cookie_jar, graph_id, start_time):
+    url = u'%s/chart2.php' % config.zabbix_frontend_url
     data = urlencode(dict(
             stime=start_time,
             graphid=graph_id,
-            width=GRAPH_WIDTH,
-            height=GRAPH_HEIGHT,
-            period=GRAPH_PERIOD))
+            width=config.graph_width,
+            height=config.graph_height,
+            period=config.graph_period))
 
     cookie_processor = HTTPCookieProcessor(cookie_jar)
     opener = build_opener(cookie_processor)
@@ -121,12 +189,12 @@ def get_graph(cookie_jar, graph_id, start_time):
 
 
 #----------------------------------------------------------------------
-def send_mail(images):
+def send_mail(config, images):
     msg = MIMEMultipart()
-    msg['From'] = SMTP_FROM
-    msg['To'] = u', '.join(SMTP_TO)
+    msg['From'] = config.smtp_from
+    msg['To'] = u', '.join(config.smtp_to)
     msg['Date'] = formatdate(localtime=True)
-    msg['Subject'] = SMTP_SUBJECT
+    msg['Subject'] = config.smtp_subject
 
     msg.attach(MIMEText(u'Zabbix Report'))
 
@@ -139,26 +207,29 @@ def send_mail(images):
         msg.attach(part)
         i += 1
 
-    smtp = smtplib.SMTP(SMTP_SERVER)
-    smtp.sendmail(SMTP_FROM, SMTP_TO, msg.as_string())
+    smtp = smtplib.SMTP(config.smtp_server)
+    smtp.sendmail(config.smtp_from, config.smtp_to, msg.as_string())
     smtp.close()
 
 
 #----------------------------------------------------------------------
 def main():
-    start_time = datetime.now() - timedelta(seconds=GRAPH_PERIOD)
+    config = Configuration()
+    config.read()
+
+    start_time = datetime.now() - timedelta(seconds=config.graph_period)
     start_time = start_time.strftime(u'%Y%m%d%H%M%S')
 
-    cookie_jar = login()
+    cookie_jar = login(config)
 
     images = list()
-    for graph_id in GRAPH_IDS:
-        image = get_graph(cookie_jar, graph_id, start_time)
+    for graph_id in config.graph_ids:
+        image = get_graph(config, cookie_jar, graph_id, start_time)
         images.append(image)
 
-    logout(cookie_jar)
+    logout(config, cookie_jar)
 
-    send_mail(images)
+    send_mail(config, images)
 
 
 if __name__ == '__main__':
