@@ -86,6 +86,7 @@ class Configuration(object):
     def read(self):
         config_file_paths = self._get_config_file_paths()
         self._parser = ConfigParser()
+        self._parser.read(config_file_paths)
 
         self._get_string('zabbix', 'zabbix_frontend_url')
         self._get_string('zabbix', 'zabbix_password')
