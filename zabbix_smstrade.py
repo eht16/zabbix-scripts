@@ -22,72 +22,17 @@
 """
 This script sends Zabbix alerts as SMS via the HTTP API of smstrade.de.
 
-It is very similar to http://www.zabbix.com/wiki/howto/config/alerts/smsapi
-but written in Python. Similarly, the subject is ignored, instead the message
-is used as SMS text. Additionally, this script will cut the passed message text
-after 160 characters to ensure only one (non-concatenated) SMS is sent.
-
-To get it working, simply edit the parameters below.
-Alternatively, you can specify the full path to a config file as the first and only
-command line argument to overwrite the default values below. This way you do not
-need to edit this script. An example config file can be found in the GIT repository
-where you got this script from.
+For details about this script and its configuration, see README.rst.
 """
 
-from ConfigParser import ConfigParser
+
 from os.path import basename
 from syslog import closelog, openlog, syslog, LOG_INFO, LOG_ERR, LOG_USER
 from urllib import urlencode
 from urllib2 import urlopen
+from zabbix_common import Configuration
 import sys
 
-
-SMSTRADE_API_URL = 'https://gateway.smstrade.de'
-SMSTRADE_KEY = 'abcd1234'
-SMSTRADE_ROUTE = 'basic'
-# if from is set to something non-empty, the route is changed to 'gold'
-SMSTRADE_FROM = ''
-# this enables the debug mode on the smstrade API, i.e. SMS are not delivered and not accounted
-SMSTRADE_DEBUG = True
-
-
-########################################################################
-class Configuration(object):
-
-    #----------------------------------------------------------------------
-    def __init__(self):
-        self.smstrade_api_url = SMSTRADE_API_URL
-        self.smstrade_key = SMSTRADE_KEY
-        self.smstrade_route = SMSTRADE_ROUTE
-        self.smstrade_from = SMSTRADE_FROM
-        self.smstrade_debug = SMSTRADE_DEBUG
-
-        self._parser = None
-        self._vars = None
-
-    #----------------------------------------------------------------------
-    def read(self):
-        self._parser = ConfigParser()
-        config_filename = u'/tmp/zabbix_script.conf'
-        self._parser.read(config_filename)
-
-        self._get_string('zabbix_smstrade', 'smstrade_api_url')
-        self._get_string('zabbix_smstrade', 'smstrade_key')
-        self._get_string('zabbix_smstrade', 'smstrade_route')
-        self._get_string('zabbix_smstrade', 'smstrade_from')
-        self._get_bool('zabbix_smstrade', 'smstrade_debug')
-
-    #----------------------------------------------------------------------
-    def _get_string(self, section, key):
-        if self._parser.has_option(section, key):
-            value = self._parser.get(section, key, vars=self._vars)
-            setattr(self, key, value)
-
-    #----------------------------------------------------------------------
-    def _get_bool(self, section, key):
-        if self._parser.has_option(section, key):
-            value = self._parser.getboolean(section, key)
-            setattr(self, key, value)
 
 
 #----------------------------------------------------------------------

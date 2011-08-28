@@ -23,30 +23,10 @@
 This script reads one or more graphs from the Zabbix frontend and
 sends them as attachments via mail.
 
-The script is inspired by http://www.zabbix.com/forum/showthread.php?t=15316
-but simpler as it just takes a list of graphids to work on instead
-of using a special media report in Zabbix to determine the graphids
-from the database.
-
-And so, this script only needs a Zabbix frontend user, no direct database
-access is necessary.
-Also, this script doesn't need to write any temporary files.
-It is written in Python as I know the language best and everything necessary
-is included in the standard libraries, at least since Python 2.6, maybe even earlier.
-
-To get it working, simply edit the parameters below and maybe set up a cronjob
-to execute this script once a day or once a way or whatever you prefer.
-Alternatively, you can specify the full path to a config file as the first and only
-command line argument to overwrite the default values below. This way you do not
-need to edit this script. An example config file can be found in the GIT repository
-where you got this script from.
-
-The graphs are queried from the Zabbix frontend and then sent as attachments
-via mail to the configured address.
+For details about this script and its configuration, see README.rst.
 """
 
 
-from ConfigParser import ConfigParser
 from cookielib import CookieJar
 from datetime import datetime, timedelta
 from email import Encoders
@@ -54,87 +34,10 @@ from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from email.Utils import formatdate
-from socket import getfqdn
 from urllib import urlencode
 from urllib2 import build_opener, HTTPCookieProcessor
+from zabbix_common import Configuration
 import smtplib
-import sys
-
-
-# either edit these values or provide a config file which will overwrite the values below
-ZABBIX_FRONTEND_URL = u'https://example.com/zabbix'
-ZABBIX_USERNAME = 'zabbix_user'
-ZABBIX_PASSWORD = 'zabbix_password'
-
-GRAPH_WIDTH = 600
-GRAPH_HEIGHT = 200
-GRAPH_PERIOD = 60 * 60 * 24 * 7 # 7 days
-# you can get the graph ids from the URL when watching a graph in the frontend
-GRAPH_IDS = [1, 2, 3, 4]
-
-SMTP_FROM = u'zabbix@%s' % getfqdn()
-SMTP_TO = [u'recipient@example.com']
-SMTP_SUBJECT = u'Zabbix Report'
-SMTP_SERVER = u'localhost'
-
-
-########################################################################
-class Configuration(object):
-
-    #----------------------------------------------------------------------
-    def __init__(self):
-        self.zabbix_frontend_url = ZABBIX_FRONTEND_URL
-        self.zabbix_username = ZABBIX_USERNAME
-        self.zabbix_password = ZABBIX_PASSWORD
-        self.graph_width = GRAPH_WIDTH
-        self.graph_height = GRAPH_HEIGHT
-        self.graph_period = GRAPH_PERIOD
-        self.graph_ids = GRAPH_IDS
-        self.smtp_from = SMTP_FROM
-        self.smtp_to = SMTP_TO
-        self.smtp_subject = SMTP_SUBJECT
-        self.smtp_server = SMTP_SERVER
-
-        self._parser = None
-        self._vars = dict(fqdn=getfqdn())
-
-    #----------------------------------------------------------------------
-    def read(self):
-        if len(sys.argv) <= 1:
-            return
-        self._parser = ConfigParser()
-        self._parser.read(sys.argv[1])
-
-        self._get_string('zabbix', 'zabbix_frontend_url')
-        self._get_string('zabbix', 'zabbix_username')
-        self._get_string('zabbix', 'zabbix_password')
-        self._get_int('zabbix_graph', 'graph_width')
-        self._get_int('zabbix_graph', 'graph_height')
-        self._get_int('zabbix_graph', 'graph_period')
-        self._get_list('zabbix_graph', 'graph_ids')
-        self._get_string('zabbix_graph', 'smtp_from')
-        self._get_list('zabbix_graph', 'smtp_to')
-        self._get_string('zabbix_graph', 'smtp_subject')
-        self._get_string('zabbix_graph', 'smtp_server')
-
-    #----------------------------------------------------------------------
-    def _get_string(self, section, key):
-        if self._parser.has_option(section, key):
-            value = self._parser.get(section, key, vars=self._vars)
-            setattr(self, key, value)
-
-    #----------------------------------------------------------------------
-    def _get_int(self, section, key):
-        if self._parser.has_option(section, key):
-            value = self._parser.getint(section, key)
-            setattr(self, key, value)
-
-    #----------------------------------------------------------------------
-    def _get_list(self, section, key):
-        if self._parser.has_option(section, key):
-            value = self._parser.get(section, key)
-            value = eval(value)
-            setattr(self, key, value)
 
 
 
