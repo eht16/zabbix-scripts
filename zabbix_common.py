@@ -51,6 +51,8 @@ SMSTRADE_KEY = 'abcd1234'
 SMSTRADE_ROUTE = 'basic'
 # if from is set to something non-empty, the route is changed to 'gold'
 SMSTRADE_FROM = ''
+# a simple custom reference to help identifying e.g. SMS delivery reports (maybe empty, max. 30 chars)
+SMSTRADE_REF = 'zabbix'
 # this enables the debug mode on the smstrade API, i.e. SMS are not delivered and not accounted
 SMSTRADE_DEBUG = True
 
@@ -69,6 +71,7 @@ class Configuration(object):
         self.smstrade_debug = SMSTRADE_DEBUG
         self.smstrade_from = SMSTRADE_FROM
         self.smstrade_key = SMSTRADE_KEY
+        self.smstrade_ref = SMSTRADE_REF
         self.smstrade_route = SMSTRADE_ROUTE
         self.smtp_from = SMTP_FROM
         self.smtp_server = SMTP_SERVER
@@ -103,6 +106,7 @@ class Configuration(object):
         self._get_string('zabbix_smstrade', 'smstrade_api_url')
         self._get_string('zabbix_smstrade', 'smstrade_from')
         self._get_string('zabbix_smstrade', 'smstrade_key')
+        self._get_string('zabbix_smstrade', 'smstrade_ref')
         self._get_string('zabbix_smstrade', 'smstrade_route')
 
     #----------------------------------------------------------------------
@@ -112,12 +116,12 @@ class Configuration(object):
         config_file_paths.append(u'/etc/zabbix-scripts.conf')
         config_file_paths.append(u'/etc/zabbix/zabbix-scripts.conf')
         config_file_paths.append(expanduser(u'~/.zabbix-scripts.conf'))
-        
+
         if self._additional_config_filepath:
             config_file_paths.append(self._additional_config_filepath)
-            
+
         return config_file_paths
-        
+
     #----------------------------------------------------------------------
     def _get_string(self, section, key):
         if self._parser.has_option(section, key):

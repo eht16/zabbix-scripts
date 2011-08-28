@@ -41,16 +41,17 @@ def send_sms(config):
             return lines[index].strip()
         except IndexError:
             return -1
-        
+
     url = config.smstrade_api_url
     recipient = sys.argv[1]
     message = sys.argv[3]
     key = config.smstrade_key
     route = config.smstrade_route
-    
+    ref = config.smstrade_ref
+
     if len(message) > 160:
         message = message[:160]
-        
+
     data = dict(
         key=key,
         to=recipient,
@@ -58,7 +59,8 @@ def send_sms(config):
         route=route,
         cost='1',
         count='1',
-        dlr='1')
+        dlr='1',
+        ref=ref)
 
     if config.smstrade_from:
         data['route'] = 'gold'
@@ -74,10 +76,10 @@ def send_sms(config):
     cost = float(_get_response_line(lines, 2))
     count = int(_get_response_line(lines, 3))
     syslog_priority = LOG_INFO if response_code == 100 else LOG_ERR
-    syslog(syslog_priority, 
+    syslog(syslog_priority,
         u'SMS sent to %s with response code %s (cost: %s, count: %s, debug: %s)' % \
         (recipient, response_code, cost, count, config.smstrade_debug))
-        
+
 
 #----------------------------------------------------------------------
 def validate_arguments():
@@ -88,10 +90,10 @@ def validate_arguments():
     # here we do not support +XXyyyy style numbers but that's ok for me :)
     if not sys.argv[1].isdigit():
         print >> sys.stderr, u'Invalid recipient phone number'
-        
+
     if not sys.argv[3]:
         print >> sys.stderr, u'Invalid / empty message'
-        
+
 
 #----------------------------------------------------------------------
 def main():
@@ -107,7 +109,7 @@ def main():
         syslog(LOG_ERR, u'An error occurred: %s' % unicode(e))
     finally:
         closelog()
-    
+
 
 if __name__ == '__main__':
     main()
