@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 #
-#  zabbix_graph.py
+#  zabbix_smstrade.py
 #
 #  Copyright 2011 Enrico Tröger <enrico(dot)troeger(at)uvena(dot)de>
 #
@@ -34,12 +34,12 @@ need to edit this script. An example config file can be found in the GIT reposit
 where you got this script from.
 """
 
-import sys
+from ConfigParser import ConfigParser
+from os.path import basename
+from syslog import closelog, openlog, syslog, LOG_INFO, LOG_ERR, LOG_USER
 from urllib import urlencode
 from urllib2 import urlopen
-from ConfigParser import ConfigParser
-from syslog import closelog, openlog, syslog, LOG_INFO, LOG_ERR, LOG_USER
-from os.path import basename
+import sys
 
 
 SMSTRADE_API_URL = 'https://gateway.smstrade.de'
@@ -71,22 +71,22 @@ class Configuration(object):
         config_filename = u'/tmp/zabbix_script.conf'
         self._parser.read(config_filename)
 
-        self._get_string('smstrade_api_url')
-        self._get_string('smstrade_key')
-        self._get_string('smstrade_route')
-        self._get_string('smstrade_from')
-        self._get_bool('smstrade_debug')
+        self._get_string('zabbix_smstrade', 'smstrade_api_url')
+        self._get_string('zabbix_smstrade', 'smstrade_key')
+        self._get_string('zabbix_smstrade', 'smstrade_route')
+        self._get_string('zabbix_smstrade', 'smstrade_from')
+        self._get_bool('zabbix_smstrade', 'smstrade_debug')
 
     #----------------------------------------------------------------------
-    def _get_string(self, key):
-        if self._parser.has_option('zabbix', key):
-            value = self._parser.get('zabbix', key, vars=self._vars)
+    def _get_string(self, section, key):
+        if self._parser.has_option(section, key):
+            value = self._parser.get(section, key, vars=self._vars)
             setattr(self, key, value)
 
     #----------------------------------------------------------------------
-    def _get_bool(self, key):
-        if self._parser.has_option('zabbix', key):
-            value = self._parser.getboolean('zabbix', key)
+    def _get_bool(self, section, key):
+        if self._parser.has_option(section, key):
+            value = self._parser.getboolean(section, key)
             setattr(self, key, value)
 
 

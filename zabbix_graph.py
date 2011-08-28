@@ -81,7 +81,6 @@ SMTP_SERVER = u'localhost'
 ########################################################################
 class Configuration(object):
 
-
     #----------------------------------------------------------------------
     def __init__(self):
         self.zabbix_frontend_url = ZABBIX_FRONTEND_URL
@@ -106,34 +105,34 @@ class Configuration(object):
         self._parser = ConfigParser()
         self._parser.read(sys.argv[1])
 
-        self._get_string('zabbix_frontend_url')
-        self._get_string('zabbix_username')
-        self._get_string('zabbix_password')
-        self._get_int('graph_width')
-        self._get_int('graph_height')
-        self._get_int('graph_period')
-        self._get_list('graph_ids')
-        self._get_string('smtp_from')
-        self._get_list('smtp_to')
-        self._get_string('smtp_subject')
-        self._get_string('smtp_server')
+        self._get_string('zabbix', 'zabbix_frontend_url')
+        self._get_string('zabbix', 'zabbix_username')
+        self._get_string('zabbix', 'zabbix_password')
+        self._get_int('zabbix_graph', 'graph_width')
+        self._get_int('zabbix_graph', 'graph_height')
+        self._get_int('zabbix_graph', 'graph_period')
+        self._get_list('zabbix_graph', 'graph_ids')
+        self._get_string('zabbix_graph', 'smtp_from')
+        self._get_list('zabbix_graph', 'smtp_to')
+        self._get_string('zabbix_graph', 'smtp_subject')
+        self._get_string('zabbix_graph', 'smtp_server')
 
     #----------------------------------------------------------------------
-    def _get_string(self, key):
-        if self._parser.has_option('zabbix', key):
-            value = self._parser.get('zabbix', key, vars=self._vars)
+    def _get_string(self, section, key):
+        if self._parser.has_option(section, key):
+            value = self._parser.get(section, key, vars=self._vars)
             setattr(self, key, value)
 
     #----------------------------------------------------------------------
-    def _get_int(self, key):
-        if self._parser.has_option('zabbix', key):
-            value = self._parser.getint('zabbix', key)
+    def _get_int(self, section, key):
+        if self._parser.has_option(section, key):
+            value = self._parser.getint(section, key)
             setattr(self, key, value)
 
     #----------------------------------------------------------------------
-    def _get_list(self, key):
-        if self._parser.has_option('zabbix', key):
-            value = self._parser.get('zabbix', key)
+    def _get_list(self, section, key):
+        if self._parser.has_option(section, key):
+            value = self._parser.get(section, key)
             value = eval(value)
             setattr(self, key, value)
 
