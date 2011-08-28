@@ -73,8 +73,9 @@ def send_sms(config):
     cost = float(_get_response_line(lines, 2))
     count = int(_get_response_line(lines, 3))
     syslog_priority = LOG_INFO if response_code == 100 else LOG_ERR
-    syslog(syslog_priority, u'SMS sent to %s with response code %s (cost: %s, count: %s)' % \
-            (recipient, response_code, cost, count))
+    syslog(syslog_priority, 
+        u'SMS sent to %s with response code %s (cost: %s, count: %s, debug: %s)' % \
+        (recipient, response_code, cost, count, config.smstrade_debug))
         
 
 #----------------------------------------------------------------------
