@@ -86,7 +86,6 @@ class Configuration(object):
     def read(self):
         config_file_paths = self._get_config_file_paths()
         self._parser = ConfigParser()
-        self._parser.read(config_file_paths)
 
         self._get_string('zabbix', 'zabbix_frontend_url')
         self._get_string('zabbix', 'zabbix_password')
@@ -109,9 +108,9 @@ class Configuration(object):
     def _get_config_file_paths(self):
         config_file_paths = list()
         # various config file paths
-        config_file_paths.append(u'/etc/zabbix_script.conf')
-        config_file_paths.append(u'/etc/zabbix/zabbix_script.conf')
-        config_file_paths.append(expanduser(u'~/.zabbix_script.conf'))
+        config_file_paths.append(u'/etc/zabbix-scripts.conf')
+        config_file_paths.append(u'/etc/zabbix/zabbix-scripts.conf')
+        config_file_paths.append(expanduser(u'~/.zabbix-scripts.conf'))
         
         if self._additional_config_filepath:
             config_file_paths.append(self._additional_config_filepath)

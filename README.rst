@@ -62,9 +62,9 @@ The scripts are configured by one shared config file.
 A sample config file is included. You should copy it to 
 one of the following locations (it is read in that order):
 
- * /etc/zabbix_script.conf
- * /etc/zabbix/zabbix_script.conf
- * ~/.zabbix_script.conf  (~ is replaced by the home directory of the user who executes this script)
+ * /etc/zabbix-scripts.conf
+ * /etc/zabbix/zabbix-scripts.conf
+ * ~/.zabbix-scripts.conf  (~ is replaced by the home directory of the user who executes this script)
 
 
 
