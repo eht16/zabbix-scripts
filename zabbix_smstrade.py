@@ -57,7 +57,8 @@ def send_sms(config):
         message=message,
         route=route,
         cost='1',
-        count='1')
+        count='1',
+        dlr='1')
 
     if config.smstrade_from:
         data['route'] = 'gold'
